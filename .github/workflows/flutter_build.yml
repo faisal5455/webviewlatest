@@ -1,0 +1,77 @@
+name: Flutter Build and Release APK
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  check_commit_message:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check_message.outputs.should_build }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - id: check_message
+        run: |
+          commit_message=$(git log -1 --pretty=%B)
+          if [[ $commit_message == *"[build apk]"* ]]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: check_commit_message
+    if: needs.check_commit_message.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '12.x'
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.1'
+    # - name: Cache pub dependencies
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: ${{ env.PUB_CACHE }}
+    #     key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-pub-
+    - name: Get dependencies
+      run: flutter pub get
+    - name: Generate Launcher Icons
+      run: flutter pub run flutter_launcher_icons
+    - name: Change Version
+      run: dart tool/change_version.dart 4 3.0.0
+    - name: Ensure correct file permissions
+      run: chmod -R 777 android/ ios/
+    - name: Change app package name
+      run: |
+        flutter pub global activate change_app_package_name
+        flutter pub global run change_app_package_name:main com.app.newtestapp
+    - name: Commit and push if changed
+      run: |
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "GitHub Actions"
+        git add .
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push)
+    - name: Generate Splash Screen
+      run: flutter pub run flutter_native_splash:create
+    - name: Build APK
+      run: flutter build apk --release
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
