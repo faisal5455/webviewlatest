@@ -1,6 +1,5 @@
 import 'dart:async';
-
-//import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -24,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Connectivity
   bool isConnected = true;
-  //late StreamSubscription<List<ConnectivityResult>> subscription;
+  late StreamSubscription<List<ConnectivityResult>> subscription;
 
   bool isDismissed = false;
   bool isFinished = false;
@@ -33,17 +32,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    // subscription = Connectivity()
-    //     .onConnectivityChanged
-    //     .listen((List<ConnectivityResult> result) {
-    //   setState(() {
-    //     if (result.contains(ConnectivityResult.none)) {
-    //       isConnected = false;
-    //     } else {
-    //       isConnected = true;
-    //     }
-    //   });
-    // });
+    subscription = Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> result) {
+      setState(() {
+        if (result.contains(ConnectivityResult.none)) {
+          isConnected = false;
+        } else {
+          isConnected = true;
+        }
+      });
+    });
 
     if (notificationUrl != '') {
       //print('Already loaded...');
