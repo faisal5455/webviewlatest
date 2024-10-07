@@ -70,9 +70,19 @@ jobs:
       run: flutter pub run flutter_native_splash:create
     - name: Build APK
       run: flutter build apk --release
-    - uses: wzieba/Firebase-Distribution-Github-Action@v1
-      with:
-        appId: chatapp-20cf3
-        serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-        groups: testers
-        file: build/app/outputs/flutter-apk/app-release.apk
+    # Step 5: Install Firebase CLI
+    - name: Install Firebase CLI
+      run: curl -sL https://firebase.tools | bash
+
+    # Step 6: Authenticate with Firebase using Service Account
+    - name: Set up Firebase authentication
+      run: |
+        echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > "${HOME}/firebase_key.json"
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: "${HOME}/firebase_key.json"
+
+      # Step 7: Upload APK to Firebase Cloud Storage
+    - name: Upload APK to Firebase Storage
+      run: |
+        firebase deploy --only hosting  # Deploy static files if you need hosting
+        gsutil cp build/app/outputs/flutter-apk/app-release.apk gs://chatapp-20cf3/apks/app-release.apk
