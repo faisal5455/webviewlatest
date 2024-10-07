@@ -56,21 +56,24 @@ jobs:
       run: dart tool/change_version.dart 4 3.0.0
     - name: Ensure correct file permissions
       run: chmod -R 777 android/ ios/
-    # - name: Change app package name
-    #   run: |
-    #     flutter pub global activate change_app_package_name
-    #     flutter pub global run change_app_package_name:main com.app.newtestapp
-    # - name: Commit and push if changed
-    #   run: |
-    #     git config --global user.email "github-actions@github.com"
-    #     git config --global user.name "GitHub Actions"
-    #     git add .
-    #     git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push)
-    # - name: Generate Splash Screen
-    #   run: flutter pub run flutter_native_splash:create
-    # - name: Build APK
-    #   run: flutter build apk --release
-    # Step 5: Install Google Cloud SDK (for gsutil)
+    - name: Change app package name
+      run: |
+        flutter pub global activate change_app_package_name
+        flutter pub global run change_app_package_name:main com.app.newtestapp
+    - name: Commit and push if changed
+      run: |
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "GitHub Actions"
+        git add .
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push)
+    - name: Generate Splash Screen
+      run: flutter pub run flutter_native_splash:create
+    - name: Build APK
+      run: flutter build apk --release
+    - uses: actions/upload-artifact@v3
+      with:
+        name: release-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
     - name: Email APK
       uses: dawidd6/action-send-mail@v3
       with:
@@ -82,4 +85,4 @@ jobs:
         body: Please find the new APK build attached to this email.
         to: faisal5455@gmail.com
         from: GitHub Actions
-        #attachments: build/app/outputs/flutter-apk/app-release.apk
+        attachments: build/app/outputs/flutter-apk/app-release.apk
