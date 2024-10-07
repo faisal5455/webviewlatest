@@ -56,10 +56,12 @@ jobs:
       run: dart tool/change_version.dart 4 3.0.0
     - name: Ensure correct file permissions
       run: chmod -R 777 android/ ios/
+    - name: Change app name
+      run: flutter pub run rename_app:main all="Nice App"
     - name: Change app package name
       run: |
         flutter pub global activate change_app_package_name
-        flutter pub global run change_app_package_name:main com.app.newtestapp
+        flutter pub global run change_app_package_name:main com.app.niceapp
     - name: Commit and push if changed
       run: |
         git config --global user.email "github-actions@github.com"
@@ -72,9 +74,6 @@ jobs:
       run: flutter build apk --release
     - name: Rename APK
       run: mv build/app/outputs/flutter-apk/app-release.apk myapp.apk
-
-    - name: Create test file
-      run: echo "This is a test file for Firebase Storage upload" > test_file.txt
 
     - name: Set up Node.js
       uses: actions/setup-node@v2
