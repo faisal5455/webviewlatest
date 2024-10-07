@@ -89,7 +89,7 @@ jobs:
     # Step 5: Upload Test File to Firebase Storage
     - name: Upload Test File to Firebase Storage
       run: |
-        gsutil cp test-file.txt gs://<your-firebase-project-id>/test/test-file.txt
+        gsutil cp test-file.txt gs://chatapp-20cf3/test/test-file.txt
 
     # Step 7: Upload APK to Firebase Cloud Storage
     # - name: Upload APK to Firebase Storage
