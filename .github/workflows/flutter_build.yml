@@ -41,48 +41,58 @@ jobs:
     - uses: subosito/flutter-action@v2
       with:
         flutter-version: '3.24.1'
-    - name: Cache pub dependencies
-      uses: actions/cache@v3
+    # - name: Cache pub dependencies
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: ${{ env.PUB_CACHE }}
+    #     key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-pub-
+    # - name: Get dependencies
+    #   run: flutter pub get
+    # - name: Generate Launcher Icons
+    #   run: flutter pub run flutter_launcher_icons
+    # - name: Change Version
+    #   run: dart tool/change_version.dart 4 3.0.0
+    # - name: Ensure correct file permissions
+    #   run: chmod -R 777 android/ ios/
+    # - name: Change app package name
+    #   run: |
+    #     flutter pub global activate change_app_package_name
+    #     flutter pub global run change_app_package_name:main com.app.newtestapp
+    # - name: Commit and push if changed
+    #   run: |
+    #     git config --global user.email "github-actions@github.com"
+    #     git config --global user.name "GitHub Actions"
+    #     git add .
+    #     git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push)
+    # - name: Generate Splash Screen
+    #   run: flutter pub run flutter_native_splash:create
+    # - name: Build APK
+    #   run: flutter build apk --release
+    # - uses: actions/upload-artifact@v3
+    #   with:
+    #     name: release-apk
+    #     path: build/app/outputs/flutter-apk/app-release.apk
+    # - name: Email APK
+    #   uses: dawidd6/action-send-mail@v3
+    #   with:
+    #     server_address: smtp.hostinger.com
+    #     server_port: 465
+    #     username: ${{secrets.EMAIL_USER}}
+    #     password: ${{secrets.EMAIL_PASS}}
+    #     subject: New APK Build Available
+    #     body: Please find the new APK build attached to this email.
+    #     to: faisal5455@gmail.com
+    #     from: GitHub Actions
+    #     attachments: build/app/outputs/flutter-apk/app-release.apk
+    - name: Create test file
+      run: echo "This is a test file for Firebase Storage upload" > test_file.txt
+
+    - name: Upload to Firebase Storage
+      uses: w9jds/firebase-action@master
       with:
-        path: ${{ env.PUB_CACHE }}
-        key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-pub-
-    - name: Get dependencies
-      run: flutter pub get
-    - name: Generate Launcher Icons
-      run: flutter pub run flutter_launcher_icons
-    - name: Change Version
-      run: dart tool/change_version.dart 4 3.0.0
-    - name: Ensure correct file permissions
-      run: chmod -R 777 android/ ios/
-    - name: Change app package name
-      run: |
-        flutter pub global activate change_app_package_name
-        flutter pub global run change_app_package_name:main com.app.newtestapp
-    - name: Commit and push if changed
-      run: |
-        git config --global user.email "github-actions@github.com"
-        git config --global user.name "GitHub Actions"
-        git add .
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push)
-    - name: Generate Splash Screen
-      run: flutter pub run flutter_native_splash:create
-    - name: Build APK
-      run: flutter build apk --release
-    - uses: actions/upload-artifact@v3
-      with:
-        name: release-apk
-        path: build/app/outputs/flutter-apk/app-release.apk
-    - name: Email APK
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.hostinger.com
-        server_port: 465
-        username: ${{secrets.EMAIL_USER}}
-        password: ${{secrets.EMAIL_PASS}}
-        subject: New APK Build Available
-        body: Please find the new APK build attached to this email.
-        to: faisal5455@gmail.com
-        from: GitHub Actions
-        attachments: build/app/outputs/flutter-apk/app-release.apk
+        args: storage:upload test_file.txt --public
+      env:
+        GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
