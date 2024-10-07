@@ -1,4 +1,4 @@
-package com.app.newtestapp
+package com.app.fantaapp
 
 import io.flutter.embedding.android.FlutterActivity
 
