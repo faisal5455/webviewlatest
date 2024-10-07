@@ -74,7 +74,7 @@ jobs:
     - name: Install Google Cloud SDK
       run: |
         sudo apt-get update
-        sudo apt-get install -y google-cloud-sdk
+        sudo apt-get install -y google-cloud-cli
 
     # Step 6: Authenticate with Firebase using Service Account
     - name: Set up Firebase authentication
