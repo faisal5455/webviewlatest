@@ -56,33 +56,42 @@ jobs:
       run: dart tool/change_version.dart 4 3.0.0
     - name: Ensure correct file permissions
       run: chmod -R 777 android/ ios/
-    - name: Change app package name
+    # - name: Change app package name
+    #   run: |
+    #     flutter pub global activate change_app_package_name
+    #     flutter pub global run change_app_package_name:main com.app.newtestapp
+    # - name: Commit and push if changed
+    #   run: |
+    #     git config --global user.email "github-actions@github.com"
+    #     git config --global user.name "GitHub Actions"
+    #     git add .
+    #     git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push)
+    # - name: Generate Splash Screen
+    #   run: flutter pub run flutter_native_splash:create
+    # - name: Build APK
+    #   run: flutter build apk --release
+    # Step 5: Install Google Cloud SDK (for gsutil)
+    - name: Install Google Cloud SDK
       run: |
-        flutter pub global activate change_app_package_name
-        flutter pub global run change_app_package_name:main com.app.newtestapp
-    - name: Commit and push if changed
-      run: |
-        git config --global user.email "github-actions@github.com"
-        git config --global user.name "GitHub Actions"
-        git add .
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push)
-    - name: Generate Splash Screen
-      run: flutter pub run flutter_native_splash:create
-    - name: Build APK
-      run: flutter build apk --release
-    # Step 5: Install Firebase CLI
-    - name: Install Firebase CLI
-      run: curl -sL https://firebase.tools | bash
+        sudo apt-get update
+        sudo apt-get install -y google-cloud-sdk
 
     # Step 6: Authenticate with Firebase using Service Account
     - name: Set up Firebase authentication
       run: |
         echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > "${HOME}/firebase_key.json"
       env:
-        GOOGLE_APPLICATION_CREDENTIALS: "${HOME}/firebase_key.json"
+          GOOGLE_APPLICATION_CREDENTIALS: "${HOME}/firebase_key.json"
+    # Step 4: Create a Test File
+    - name: Create a test file
+      run: echo "This is a test file for Firebase Storage upload" > test-file.txt
 
-      # Step 7: Upload APK to Firebase Cloud Storage
-    - name: Upload APK to Firebase Storage
+    # Step 5: Upload Test File to Firebase Storage
+    - name: Upload Test File to Firebase Storage
       run: |
-        firebase deploy --only hosting  # Deploy static files if you need hosting
-        gsutil cp build/app/outputs/flutter-apk/app-release.apk gs://chatapp-20cf3/apks/app-release.apk
+        gsutil cp test-file.txt gs://<your-firebase-project-id>/test/test-file.txt
+
+    # Step 7: Upload APK to Firebase Cloud Storage
+    # - name: Upload APK to Firebase Storage
+    #   run: |
+    #     gsutil cp build/app/outputs/flutter-apk/app-release.apk gs://chatapp-20cf3/apks/app-release.apk
