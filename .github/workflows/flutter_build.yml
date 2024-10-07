@@ -2,9 +2,8 @@ name: Flutter Build and Release APK
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - '*'
 
 permissions:
   contents: write
@@ -57,11 +56,11 @@ jobs:
     - name: Ensure correct file permissions
       run: chmod -R 777 android/ ios/
     - name: Change app name
-      run: flutter pub run rename_app:main all="Your App"
+      run: flutter pub run rename_app:main all="Fanta App"
     - name: Change app package name
       run: |
         flutter pub global activate change_app_package_name
-        flutter pub global run change_app_package_name:main com.app.youroodapp
+        flutter pub global run change_app_package_name:main com.app.fantaapp
     - name: Commit and push if changed
       run: |
         git config --global user.email "github-actions@github.com"
