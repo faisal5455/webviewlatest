@@ -57,11 +57,11 @@ jobs:
     - name: Ensure correct file permissions
       run: chmod -R 777 android/ ios/
     - name: Change app name
-      run: flutter pub run rename_app:main all="Mine App"
+      run: flutter pub run rename_app:main all="Thick App"
     - name: Change app package name
       run: |
         flutter pub global activate change_app_package_name
-        flutter pub global run change_app_package_name:main com.app.mineapp
+        flutter pub global run change_app_package_name:main com.app.thickapp
     - name: Commit and push if changed
       run: |
         git config --global user.email "github-actions@github.com"
