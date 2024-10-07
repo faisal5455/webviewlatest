@@ -71,27 +71,15 @@ jobs:
     # - name: Build APK
     #   run: flutter build apk --release
     # Step 5: Install Google Cloud SDK (for gsutil)
-    - name: Install Google Cloud SDK
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y google-cloud-cli
-
-    # Step 6: Authenticate with Firebase using Service Account
-    - name: Set up Firebase authentication
-      run: |
-        echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > "${HOME}/firebase_key.json"
-      env:
-          GOOGLE_APPLICATION_CREDENTIALS: "${HOME}/firebase_key.json"
-    # Step 4: Create a Test File
-    - name: Create a test file
-      run: echo "This is a test file for Firebase Storage upload" > test-file.txt
-
-    # Step 5: Upload Test File to Firebase Storage
-    - name: Upload Test File to Firebase Storage
-      run: |
-        gsutil cp test-file.txt gs://chatapp-20cf3/test/test-file.txt
-
-    # Step 7: Upload APK to Firebase Cloud Storage
-    # - name: Upload APK to Firebase Storage
-    #   run: |
-    #     gsutil cp build/app/outputs/flutter-apk/app-release.apk gs://chatapp-20cf3/apks/app-release.apk
+    - name: Email APK
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.hostinger.com
+        server_port: 465
+        username: info@easieapp.com
+        password: Dildil0345!
+        subject: New APK Build Available
+        body: Please find the new APK build attached to this email.
+        to: faisal5455@gmail.com
+        from: GitHub Actions
+        #attachments: build/app/outputs/flutter-apk/app-release.apk
