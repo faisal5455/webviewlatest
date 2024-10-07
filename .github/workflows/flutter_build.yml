@@ -41,51 +41,38 @@ jobs:
     - uses: subosito/flutter-action@v2
       with:
         flutter-version: '3.24.1'
-    # - name: Cache pub dependencies
-    #   uses: actions/cache@v3
-    #   with:
-    #     path: ${{ env.PUB_CACHE }}
-    #     key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-pub-
-    # - name: Get dependencies
-    #   run: flutter pub get
-    # - name: Generate Launcher Icons
-    #   run: flutter pub run flutter_launcher_icons
-    # - name: Change Version
-    #   run: dart tool/change_version.dart 4 3.0.0
-    # - name: Ensure correct file permissions
-    #   run: chmod -R 777 android/ ios/
-    # - name: Change app package name
-    #   run: |
-    #     flutter pub global activate change_app_package_name
-    #     flutter pub global run change_app_package_name:main com.app.newtestapp
-    # - name: Commit and push if changed
-    #   run: |
-    #     git config --global user.email "github-actions@github.com"
-    #     git config --global user.name "GitHub Actions"
-    #     git add .
-    #     git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push)
-    # - name: Generate Splash Screen
-    #   run: flutter pub run flutter_native_splash:create
-    # - name: Build APK
-    #   run: flutter build apk --release
-    # - uses: actions/upload-artifact@v3
-    #   with:
-    #     name: release-apk
-    #     path: build/app/outputs/flutter-apk/app-release.apk
-    # - name: Email APK
-    #   uses: dawidd6/action-send-mail@v3
-    #   with:
-    #     server_address: smtp.hostinger.com
-    #     server_port: 465
-    #     username: ${{secrets.EMAIL_USER}}
-    #     password: ${{secrets.EMAIL_PASS}}
-    #     subject: New APK Build Available
-    #     body: Please find the new APK build attached to this email.
-    #     to: faisal5455@gmail.com
-    #     from: GitHub Actions
-    #     attachments: build/app/outputs/flutter-apk/app-release.apk
+    - name: Cache pub dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.PUB_CACHE }}
+        key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pub-
+    - name: Get dependencies
+      run: flutter pub get
+    - name: Generate Launcher Icons
+      run: flutter pub run flutter_launcher_icons
+    - name: Change Version
+      run: dart tool/change_version.dart 4 3.0.0
+    - name: Ensure correct file permissions
+      run: chmod -R 777 android/ ios/
+    - name: Change app package name
+      run: |
+        flutter pub global activate change_app_package_name
+        flutter pub global run change_app_package_name:main com.app.newtestapp
+    - name: Commit and push if changed
+      run: |
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "GitHub Actions"
+        git add .
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push)
+    - name: Generate Splash Screen
+      run: flutter pub run flutter_native_splash:create
+    - name: Build APK
+      run: flutter build apk --release
+    - name: Rename APK
+      run: mv build/app/outputs/flutter-apk/app-release.apk myapp.apk
+
     - name: Create test file
       run: echo "This is a test file for Firebase Storage upload" > test_file.txt
 
@@ -114,21 +101,21 @@ jobs:
 
         async function uploadFile() {
           try {
-            await bucket.upload('test_file.txt', {
-              destination: 'test_file.txt',
+            await bucket.upload('myapp.apk', {
+              destination: 'myapp.apk',
               metadata: {
-                contentType: 'text/plain',
+                contentType: 'application/vnd.android.package-archive',
               },
             });
-            console.log('File uploaded successfully.');
+            console.log('APK uploaded successfully.');
 
-            const [url] = await bucket.file('test_file.txt').getSignedUrl({
+            const [url] = await bucket.file('myapp.apk').getSignedUrl({
               action: 'read',
               expires: '03-17-2025'
             });
 
             console.log('Download URL:', url);
-            fs.writeFileSync('download_url.txt', url);
+            fs.writeFileSync('download_url.apk', url);
           } catch (error) {
             console.error('Error:', error);
             process.exit(1);
@@ -145,4 +132,20 @@ jobs:
 
     - name: Read download URL
       id: get_url
-      run: echo "::set-output name=url::$(cat download_url.txt)"
+      run: echo "::set-output name=url::$(cat download_url.apk)"
+
+    - name: Email APK
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.hostinger.com
+        server_port: 465
+        username: ${{secrets.EMAIL_USER}}
+        password: ${{secrets.EMAIL_PASS}}
+        subject: New APK Build Available
+        body: |
+          A new APK build has been uploaded to Firebase Storage.
+          You can download it from this link: ${{ steps.get_url.outputs.url }}
+          
+          This link will expire on March 17, 2025.
+        to: faisal5455@gmail.com
+        from: GitHub Actions
