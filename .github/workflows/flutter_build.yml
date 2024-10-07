@@ -97,11 +97,9 @@ jobs:
     - name: Install Firebase Admin SDK
       run: npm install firebase-admin
 
-    - name: Upload to Firebase and Get URL
-      env:
-        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+    - name: Create Firebase upload script
       run: |
-        node << EOF
+        cat << EOF > upload_to_firebase.js
         const admin = require('firebase-admin');
         const fs = require('fs');
 
@@ -109,7 +107,7 @@ jobs:
 
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
-          storageBucket: '${serviceAccount.project_id}.appspot.com'
+          storageBucket: `${serviceAccount.project_id}.appspot.com`
         });
 
         const bucket = admin.storage().bucket();
@@ -130,7 +128,6 @@ jobs:
             });
 
             console.log('Download URL:', url);
-            // Save URL to a file so we can use it in the next step
             fs.writeFileSync('download_url.txt', url);
           } catch (error) {
             console.error('Error:', error);
@@ -140,3 +137,12 @@ jobs:
 
         uploadFile();
         EOF
+
+    - name: Upload to Firebase and Get URL
+      env:
+        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+      run: node upload_to_firebase.js
+
+    - name: Read download URL
+      id: get_url
+      run: echo "::set-output name=url::$(cat download_url.txt)"
