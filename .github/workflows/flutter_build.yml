@@ -67,7 +67,7 @@ jobs:
         git config --global user.email "github-actions@github.com"
         git config --global user.name "GitHub Actions"
         git add .
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push -f)
     - name: Generate Splash Screen
       run: flutter pub run flutter_native_splash:create
     - name: Build APK
