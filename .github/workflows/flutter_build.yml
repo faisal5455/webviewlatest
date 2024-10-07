@@ -70,8 +70,22 @@ jobs:
       run: flutter pub run flutter_native_splash:create
     - name: Build APK
       run: flutter build apk --release
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
-      with:
-        name: release-apk
-        path: build/app/outputs/flutter-apk/app-release.apk
+    # Step 5: Install Firebase CLI
+    - name: Install Firebase CLI
+      run: |
+          curl -sL https://firebase.tools | bash    
+    # Step 6: Authenticate with Firebase using service account
+    - name: Authenticate with Firebase
+      run: |
+        echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" > firebase_key.json
+        firebase auth:ci --token $(firebase login:ci)
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      
+
+    # Step 7: Upload APK to Firebase Cloud Storage
+    - name: Upload APK to Firebase Storage
+      run: |
+        firebase storage:upload build/app/outputs/flutter-apk/app-release.apk \
+        --path /apks/app-release.apk \
+        --project chatapp-20cf3
