@@ -123,23 +123,20 @@ jobs:
         uploadFile();
         EOF
 
-    - name: Set Firebase Service Account based on commit message
-      run: |
-        if [[ "${{ github.event.head_commit.message }}" == *"firstserver"* ]]; then
-          echo "FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_FIRST }}" >> $GITHUB_ENV
-        elif [[ "${{ github.event.head_commit.message }}" == *"secondserver"* ]]; then
-          echo "FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_SECOND }}" >> $GITHUB_ENV
-        elif [[ "${{ github.event.head_commit.message }}" == *"thirdserver"* ]]; then
-          echo "FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_THIRD }}" >> $GITHUB_ENV
-        else
-          echo "FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" >> $GITHUB_ENV
-        fi
-    - name: Upload to firebase    
+    - name: Upload to Firebase (First)
+      if: contains(github.event.head_commit.message, 'firstserver')
+      env:
+        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_FIRST }}
       run: node upload_to_firebase.js
-
-    # - name: Upload to Firebase and Get URL
-    #   env:
-    #     FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+    - name: Upload to Firebase (Default)
+      if: "!contains(github.event.head_commit.message, 'firstserver') && !contains(github.event.head_commit.message, 'secondserver') && !contains(github.event.head_commit.message, 'third')"
+      env:
+        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+      run: node upload_to_firebase.js
+    
+      # - name: Upload to Firebase and Get URL
+      # env:
+      #   FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
     
     #   run: node upload_to_firebase.js
 
