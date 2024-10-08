@@ -42,38 +42,27 @@ jobs:
         flutter-version: '3.24.1'
 
     # Step 3: Read values from app_settings.json
-    # - name: Parse app_settings.json
-    #   id: parse_json
-    #   run: |
-    #     # Read values from app_settings.json
-    #     APP_NAME=$(jq -r '.appName' lib/app_settings.json)
-    #     PACKAGE=$(jq -r '.package' lib/app_settings.json)
-    #     VERSION=$(jq -r '.version' lib/app_settings.json)
-
-    #     # Export the values to be used later in the workflow
-    #     echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
-    #     echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
-    #     echo "VERSION=$VERSION" >> $GITHUB_ENV
-    # - name: Access environment variable
-    #   run: echo "The value of PACKAGE is $PACKAGE"
-
-    - name: Read values from Dart file
-      id: read_dart
+    - name: Parse app_settings.json
+      id: parse_json
       run: |
-        APP_NAME=$(grep 'appName' lib/app_settings.dart | cut -d '"' -f 2)
-        PACKAGE=$(grep 'package' lib/app_settings.dart | cut -d '"' -f 2)
-        VERSION=$(grep 'version' lib/app_settings.dart | cut -d '"' -f 2)
+        # Read values from app_settings.json
+        APP_NAME=$(jq -r '.appName' lib/configs.json)
+        PACKAGE=$(jq -r '.package' lib/configs.json)
+        VERSION=$(jq -r '.version' lib/configs.json)
+
+        # Export the values to be used later in the workflow
         echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
         echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
         echo "VERSION=$VERSION" >> $GITHUB_ENV
-
+    - name: Access environment variable
+      run: echo "The value of PACKAGE is $PACKAGE"
 
     - name: Get dependencies
       run: flutter pub get
     - name: Generate Launcher Icons
       run: flutter pub run flutter_launcher_icons
     - name: Change Version
-      run: dart tool/change_version.dart 4 3.0.0
+      run: dart tool/change_version.dart $VERSION
     - name: Ensure correct file permissions
       run: chmod -R 777 android/ ios/
     - name: Change app name
