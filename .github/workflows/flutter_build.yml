@@ -134,6 +134,7 @@ jobs:
         else
           echo "FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" >> $GITHUB_ENV
         fi
+    - name: Upload to firebase    
       run: node upload_to_firebase.js
 
     # - name: Upload to Firebase and Get URL
