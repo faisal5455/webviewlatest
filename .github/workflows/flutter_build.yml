@@ -45,9 +45,6 @@ jobs:
     - name: Parse app_settings.json
       id: parse_json
       run: |
-        # Install jq to parse JSON
-        sudo apt-get install jq
-        
         # Read values from app_settings.json
         APP_NAME=$(jq -r '.appName' lib/app_settings.json)
         PACKAGE=$(jq -r '.package' lib/app_settings.json)
@@ -55,7 +52,8 @@ jobs:
         # Export the values to be used later in the workflow
         echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
         echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
-
+    - name: Access environment variable
+      run: echo "The value of PACKAGE is ${{ env.PACKAGE }}"
     # - name: Cache pub dependencies
     #   uses: actions/cache@v3
     #   with:
