@@ -1,4 +1,4 @@
-package com.app.newtestapp
+package com.app.hurrayapp
 
 import io.flutter.embedding.android.FlutterActivity
 
