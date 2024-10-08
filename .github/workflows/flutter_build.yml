@@ -40,122 +40,132 @@ jobs:
     - uses: subosito/flutter-action@v2
       with:
         flutter-version: '3.24.1'
-    - name: Cache pub dependencies
-      uses: actions/cache@v3
-      with:
-        path: ${{ env.PUB_CACHE }}
-        key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-pub-
-    - name: Get dependencies
-      run: flutter pub get
-    - name: Generate Launcher Icons
-      run: flutter pub run flutter_launcher_icons
-    - name: Change Version
-      run: dart tool/change_version.dart 4 3.0.0
-    - name: Ensure correct file permissions
-      run: chmod -R 777 android/ ios/
-    - name: Change app name
-      run: flutter pub run rename_app:main all="Coca App"
-    - name: Change app package name
+
+    # Step 3: Read values from app_settings.json
+    - name: Parse app_settings.json
+      id: parse_json
       run: |
-        flutter pub global activate change_app_package_name
-        flutter pub global run change_app_package_name:main com.app.cocaapp
-    - name: Commit and push if changed
-      run: |
-        git config --global user.email "github-actions@github.com"
-        git config --global user.name "GitHub Actions"
-        git add .
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push -f)
-    - name: Generate Splash Screen
-      run: flutter pub run flutter_native_splash:create
-    - name: Build APK
-      run: flutter build apk --release
-    - name: Rename APK
-      run: mv build/app/outputs/flutter-apk/app-release.apk myapp.apk
+        # Install jq to parse JSON
+        sudo apt-get install jq
+        
+        # Read values from app_settings.json
+        APP_NAME=$(jq -r '.appName' lib/app_settings.json)
+        PACKAGE=$(jq -r '.package' lib/app_settings.json)
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+        # Export the values to be used later in the workflow
+        echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+        echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
 
-    - name: Install Firebase Admin SDK
-      run: npm install firebase-admin
+    # - name: Cache pub dependencies
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: ${{ env.PUB_CACHE }}
+    #     key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-pub-
+    # - name: Get dependencies
+    #   run: flutter pub get
+    # - name: Generate Launcher Icons
+    #   run: flutter pub run flutter_launcher_icons
+    # - name: Change Version
+    #   run: dart tool/change_version.dart 4 3.0.0
+    # - name: Ensure correct file permissions
+    #   run: chmod -R 777 android/ ios/
+    # - name: Change app name
+    #   run: flutter pub run rename_app:main all="Coca App"
+    # - name: Change app package name
+    #   run: |
+    #     flutter pub global activate change_app_package_name
+    #     flutter pub global run change_app_package_name:main com.app.cocaapp
+    # - name: Commit and push if changed
+    #   run: |
+    #     git config --global user.email "github-actions@github.com"
+    #     git config --global user.name "GitHub Actions"
+    #     git add .
+    #     git diff --quiet && git diff --staged --quiet || (git commit -m "Automated package name change to com.app.mynewapp" && git push -f)
+    # - name: Generate Splash Screen
+    #   run: flutter pub run flutter_native_splash:create
+    # - name: Build APK
+    #   run: flutter build apk --release
+    # - name: Rename APK
+    #   run: mv build/app/outputs/flutter-apk/app-release.apk myapp.apk
 
-    - name: Create Firebase upload script
-      run: |
-        cat << 'EOF' > upload_to_firebase.js
-        const admin = require('firebase-admin');
-        const fs = require('fs');
+    # - name: Set up Node.js
+    #   uses: actions/setup-node@v2
+    #   with:
+    #     node-version: '14'
 
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    # - name: Install Firebase Admin SDK
+    #   run: npm install firebase-admin
 
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-          storageBucket: serviceAccount.project_id + '.appspot.com'
-        });
+    # - name: Create Firebase upload script
+    #   run: |
+    #     cat << 'EOF' > upload_to_firebase.js
+    #     const admin = require('firebase-admin');
+    #     const fs = require('fs');
 
-        const bucket = admin.storage().bucket();
+    #     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
-        async function uploadFile() {
-          try {
-            await bucket.upload('myapp.apk', {
-              destination: 'myapp.apk',
-              metadata: {
-                contentType: 'application/vnd.android.package-archive',
-              },
-            });
-            console.log('APK uploaded successfully.');
+    #     admin.initializeApp({
+    #       credential: admin.credential.cert(serviceAccount),
+    #       storageBucket: serviceAccount.project_id + '.appspot.com'
+    #     });
 
-            const [url] = await bucket.file('myapp.apk').getSignedUrl({
-              action: 'read',
-              expires: '03-17-2025'
-            });
+    #     const bucket = admin.storage().bucket();
 
-            console.log('Download URL:', url);
-            fs.writeFileSync('download_url.apk', url);
-          } catch (error) {
-            console.error('Error:', error);
-            process.exit(1);
-          }
-        }
+    #     async function uploadFile() {
+    #       try {
+    #         await bucket.upload('myapp.apk', {
+    #           destination: 'myapp.apk',
+    #           metadata: {
+    #             contentType: 'application/vnd.android.package-archive',
+    #           },
+    #         });
+    #         console.log('APK uploaded successfully.');
 
-        uploadFile();
-        EOF
+    #         const [url] = await bucket.file('myapp.apk').getSignedUrl({
+    #           action: 'read',
+    #           expires: '03-17-2025'
+    #         });
 
-    - name: Upload to Firebase (First)
-      if: contains(github.event.head_commit.message, 'firstserver')
-      env:
-        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_FIRST }}
-      run: node upload_to_firebase.js
-    - name: Upload to Firebase (Default)
-      if: "!contains(github.event.head_commit.message, 'firstserver') && !contains(github.event.head_commit.message, 'secondserver') && !contains(github.event.head_commit.message, 'third')"
-      env:
-        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-      run: node upload_to_firebase.js
-    
-      # - name: Upload to Firebase and Get URL
-      # env:
-      #   FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-    
+    #         console.log('Download URL:', url);
+    #         fs.writeFileSync('download_url.apk', url);
+    #       } catch (error) {
+    #         console.error('Error:', error);
+    #         process.exit(1);
+    #       }
+    #     }
+
+    #     uploadFile();
+    #     EOF
+
+    # - name: Upload to Firebase (First)
+    #   if: contains(github.event.head_commit.message, 'firstserver')
+    #   env:
+    #     FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_FIRST }}
     #   run: node upload_to_firebase.js
+    # - name: Upload to Firebase (Default)
+    #   if: "!contains(github.event.head_commit.message, 'firstserver') && !contains(github.event.head_commit.message, 'secondserver') && !contains(github.event.head_commit.message, 'third')"
+    #   env:
+    #     FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+    #   run: node upload_to_firebase.js
+    
+    # - name: Read download URL
+    #   id: get_url
+    #   run: echo "::set-output name=url::$(cat download_url.apk)"
 
-    - name: Read download URL
-      id: get_url
-      run: echo "::set-output name=url::$(cat download_url.apk)"
-
-    - name: Email APK
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.hostinger.com
-        server_port: 465
-        username: ${{secrets.EMAIL_USER}}
-        password: ${{secrets.EMAIL_PASS}}
-        subject: New APK Build Available
-        body: |
-          A new APK build has been uploaded to Firebase Storage.
-          You can download it from this link: ${{ steps.get_url.outputs.url }}
+    # - name: Email APK
+    #   uses: dawidd6/action-send-mail@v3
+    #   with:
+    #     server_address: smtp.hostinger.com
+    #     server_port: 465
+    #     username: ${{secrets.EMAIL_USER}}
+    #     password: ${{secrets.EMAIL_PASS}}
+    #     subject: New APK Build Available
+    #     body: |
+    #       A new APK build has been uploaded to Firebase Storage.
+    #       You can download it from this link: ${{ steps.get_url.outputs.url }}
           
-          This link will expire on March 17, 2025.
-        to: faisal5455@gmail.com
-        from: GitHub Actions
+    #       This link will expire on March 17, 2025.
+    #     to: faisal5455@gmail.com
+    #     from: GitHub Actions

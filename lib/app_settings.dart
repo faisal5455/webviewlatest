@@ -3,6 +3,8 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 
 Map<String, dynamic> appSettings = {
+  "appName": "My Test",
+  "package": "com.app.mytestapp",
   "websiteUrl": "https://www.google.com",
   "themeColor": "",
   "showTabbar": true,
